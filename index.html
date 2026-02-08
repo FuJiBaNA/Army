@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Army Cloud Accounting PRO</title>
+    <title>Army Accounting v4 (Search System)</title>
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <script src="https://unpkg.com/alpinejs" defer></script>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -21,39 +21,47 @@
     <div class="fixed top-4 right-4 left-4 z-50 space-y-2 no-print">
         <template x-for="note in notifications" :key="note.id">
             <div :class="note.type === 'error' ? 'bg-red-600' : 'bg-green-600'" 
-                 class="text-white px-6 py-4 rounded-2xl shadow-2xl flex items-center justify-between shadow-xl">
+                 class="text-white px-6 py-4 rounded-2xl shadow-2xl flex items-center justify-between">
                 <span class="font-bold" x-text="note.message"></span>
                 <button @click="removeNote(note.id)" class="ml-4 text-2xl">&times;</button>
             </div>
         </template>
     </div>
 
-    <div class="max-w-5xl mx-auto p-4">
-        <header class="flex justify-between items-center mb-6 no-print">
-            <h1 class="text-2xl font-black text-green-900">🎖️ ARMY ACCOUNTING</h1>
-            <div class="flex gap-2">
-                <button @click="exportToExcel()" class="bg-blue-600 text-white px-4 py-2 rounded-lg font-bold shadow-lg hover:bg-blue-700 active:scale-95 transition">
-                    📊 ออกรายงาน Excel
-                </button>
-            </div>
+    <div class="max-w-6xl mx-auto p-4">
+        <header class="flex flex-col md:flex-row justify-between items-center mb-6 no-print gap-4">
+            <h1 class="text-2xl font-black text-green-900">🎖️ ARMY ACCOUNTING v4</h1>
+            <button @click="exportToExcel()" class="bg-blue-600 text-white px-6 py-2.5 rounded-xl font-bold shadow-lg active:scale-95 transition w-full md:w-auto">
+                📊 ออกรายงาน Excel
+            </button>
         </header>
 
-        <div class="grid md:grid-cols-2 gap-4 mb-8 no-print">
+        <div class="grid md:grid-cols-2 gap-4 mb-6 no-print">
             <div class="bg-white p-5 rounded-3xl shadow-sm border-b-4 border-green-500">
-                <h3 class="text-xs font-black text-gray-400 mb-3 uppercase tracking-widest">👤 จัดการรายชื่อ</h3>
+                <h3 class="text-xs font-black text-gray-400 mb-3 uppercase tracking-widest font-bold">👤 เพิ่มทหารใหม่</h3>
                 <div class="flex gap-2">
-                    <input type="text" x-model="newSoldier" class="bg-gray-50 border-0 p-3 flex-1 rounded-xl focus:ring-2 focus:ring-green-500 outline-none" placeholder="ชื่อ-นามสกุลทหารใหม่">
+                    <input type="number" x-model="newId" class="bg-gray-50 border-0 p-3 w-20 rounded-xl focus:ring-2 focus:ring-green-500 outline-none font-bold" placeholder="เลข">
+                    <input type="text" x-model="newSoldier" class="bg-gray-50 border-0 p-3 flex-1 rounded-xl focus:ring-2 focus:ring-green-500 outline-none" placeholder="ชื่อ-นามสกุล">
                     <button @click="addSoldier()" class="bg-green-600 text-white px-6 rounded-xl font-bold">เพิ่ม</button>
                 </div>
             </div>
 
             <div class="bg-white p-5 rounded-3xl shadow-sm border-b-4 border-blue-500">
-                <h3 class="text-xs font-black text-gray-400 mb-3 uppercase tracking-widest">💸 จัดการรายการเงิน</h3>
+                <h3 class="text-xs font-black text-gray-400 mb-3 uppercase tracking-widest font-bold">💸 เพิ่มรายการเงิน</h3>
                 <div class="flex gap-2">
-                    <input type="text" x-model="feeName" class="bg-gray-50 border-0 p-3 flex-1 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500" placeholder="รายการ (เช่น ค่าซักรีด)">
+                    <input type="text" x-model="feeName" class="bg-gray-50 border-0 p-3 flex-1 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500" placeholder="ชื่อรายการ">
                     <input type="number" x-model="feeAmount" class="bg-gray-50 border-0 p-3 w-24 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500" placeholder="บาท">
                     <button @click="addFee()" class="bg-blue-600 text-white px-4 rounded-xl font-bold">เพิ่ม</button>
                 </div>
+            </div>
+        </div>
+
+        <div class="mb-4 no-print">
+            <div class="relative">
+                <span class="absolute inset-y-0 left-0 pl-4 flex items-center text-gray-400">🔍</span>
+                <input type="text" x-model="searchQuery" 
+                    class="w-full bg-white border-2 border-gray-200 p-4 pl-12 rounded-2xl shadow-sm focus:border-green-500 focus:ring-0 outline-none transition" 
+                    placeholder="ค้นหาด้วยเลขประจำตัว หรือ ชื่อทหาร...">
             </div>
         </div>
 
@@ -62,9 +70,9 @@
                 <table class="w-full text-left border-collapse">
                     <thead>
                         <tr class="bg-slate-800 text-white text-[12px]">
-                            <th class="p-5 sticky-col bg-slate-800 border-r border-slate-700">รายชื่อ</th>
+                            <th class="p-5 sticky-col bg-slate-800 border-r border-slate-700 w-64">เลข / รายชื่อ</th>
                             <template x-for="fee in fees" :key="fee.id">
-                                <th class="p-5 text-center border-l border-slate-700 min-w-[150px]">
+                                <th class="p-5 text-center border-l border-slate-700 min-w-[140px]">
                                     <div class="text-sm font-bold" x-text="fee.name"></div>
                                     <div class="text-blue-300 mb-2" x-text="Number(fee.amount).toLocaleString() + '.-'"></div>
                                     <div class="flex justify-center gap-3 no-print">
@@ -76,21 +84,22 @@
                         </tr>
                     </thead>
                     <tbody class="divide-y">
-                        <template x-for="soldier in soldiers" :key="soldier.id">
+                        <template x-for="soldier in filteredSoldiers" :key="soldier.id">
                             <tr class="hover:bg-blue-50 transition">
                                 <td class="p-4 font-bold sticky-col">
-                                    <div class="flex items-center justify-between gap-4">
-                                        <span x-text="soldier.name" class="text-slate-700"></span>
-                                        <div class="flex gap-2 no-print">
-                                            <button @click="editSoldier(soldier)" class="text-gray-300 hover:text-yellow-600">✏️</button>
-                                            <button @click="removeSoldier(soldier.id)" class="text-gray-300 hover:text-red-500">🗑️</button>
+                                    <div class="flex items-center gap-3">
+                                        <span class="bg-slate-100 text-slate-600 px-2 py-1 rounded text-sm min-w-[35px] text-center" x-text="soldier.soldier_no || '-'"></span>
+                                        <span x-text="soldier.name" class="text-slate-700 truncate"></span>
+                                        <div class="flex gap-1 ml-auto no-print">
+                                            <button @click="editSoldier(soldier)" class="text-gray-300 hover:text-yellow-600 p-1">✏️</button>
+                                            <button @click="removeSoldier(soldier.id)" class="text-gray-300 hover:text-red-500 p-1">🗑️</button>
                                         </div>
                                     </div>
                                 </td>
                                 <template x-for="fee in fees" :key="fee.id">
                                     <td class="p-4 text-center border-l border-gray-50">
                                         <input type="checkbox" 
-                                            class="w-7 h-7 rounded-lg accent-green-600 cursor-pointer shadow-sm"
+                                            class="w-7 h-7 rounded-lg accent-green-600 cursor-pointer shadow-sm active:scale-125 transition-transform"
                                             :checked="soldier.payments && soldier.payments[fee.id]"
                                             @change="togglePayment(soldier, fee.id)">
                                     </td>
@@ -100,40 +109,27 @@
                     </tbody>
                 </table>
             </div>
+            <div x-show="filteredSoldiers.length === 0" class="p-10 text-center text-gray-400 italic">
+                ไม่พบข้อมูลที่ค้นหา...
+            </div>
         </div>
 
-        <div class="mt-10 grid md:grid-cols-3 gap-6">
-            <div class="md:col-span-2 bg-slate-900 text-white p-8 rounded-[2.5rem] shadow-2xl">
-                <h2 class="text-xl font-bold mb-6 text-yellow-400 uppercase tracking-widest flex justify-between">
-                    <span>📊 สรุปยอดรวมแต่ละรายการ</span>
-                    <span class="text-xs text-slate-500 no-print">อัปเดตแบบ Real-time</span>
-                </h2>
-                <div class="space-y-4">
-                    <template x-for="fee in fees" :key="fee.id">
-                        <div class="flex justify-between items-center bg-slate-800/50 p-4 rounded-2xl border border-slate-700">
-                            <div>
-                                <div x-text="fee.name" class="font-bold"></div>
-                                <div class="text-[10px] text-slate-400" x-text="'ราคาต่อหน่วย: ' + fee.amount + ' บาท'"></div>
-                            </div>
-                            <div class="text-right">
-                                <div class="text-yellow-500 font-mono text-xl font-bold" x-text="getSummary(fee.id).toLocaleString()"></div>
-                                <div class="text-[10px] text-slate-500" x-text="'จ่ายแล้ว ' + countPaid(fee.id) + ' นาย'"></div>
-                            </div>
+        <div class="mt-8 bg-slate-900 text-white p-8 rounded-[2.5rem] shadow-2xl no-print">
+            <h2 class="text-xl font-bold mb-6 text-yellow-400 uppercase tracking-widest">📊 สรุปยอดรวมแต่ละรายการ</h2>
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <template x-for="fee in fees" :key="fee.id">
+                    <div class="bg-slate-800/50 p-4 rounded-2xl border border-slate-700 flex justify-between items-center">
+                        <div>
+                            <div x-text="fee.name" class="font-bold text-sm"></div>
+                            <div class="text-[10px] text-slate-500" x-text="countPaid(fee.id) + ' นาย จาก ' + soldiers.length"></div>
                         </div>
-                    </template>
-                    <div class="pt-6 border-t border-slate-700 flex justify-between items-end">
-                        <span class="text-slate-400 font-bold uppercase text-sm">ยอดเงินรวมสุทธิทั้งหมด</span>
-                        <span class="text-4xl font-black text-green-400 font-mono" x-text="totalAll().toLocaleString() + '.-'"></span>
+                        <div class="text-yellow-500 font-mono text-lg font-bold" x-text="getSummary(fee.id).toLocaleString()"></div>
                     </div>
-                </div>
+                </template>
             </div>
-
-            <div class="bg-red-50 p-6 rounded-[2.5rem] border-2 border-dashed border-red-200 no-print">
-                <h3 class="text-red-600 font-black mb-4 uppercase text-center text-sm">โซนอันตราย</h3>
-                <button @click="clearAllData()" class="w-full bg-white text-red-600 border-2 border-red-600 p-4 rounded-2xl font-bold hover:bg-red-600 hover:text-white transition active:scale-95">
-                    ล้างข้อมูลทั้งหมดในระบบ
-                </button>
-                <p class="text-[10px] text-red-400 mt-4 text-center font-medium italic">* การลบข้อมูลจะไม่สามารถกู้คืนได้</p>
+            <div class="mt-8 pt-6 border-t border-slate-700 flex justify-between items-center">
+                <span class="text-slate-400 font-bold uppercase text-xs">ยอดเงินรวมสุทธิทั้งหมด</span>
+                <span class="text-4xl font-black text-green-400 font-mono" x-text="totalAll().toLocaleString() + '.-'"></span>
             </div>
         </div>
     </div>
@@ -149,12 +145,24 @@
                 fees: [],
                 notifications: [],
                 newSoldier: '',
+                newId: '',
                 feeName: '',
                 feeAmount: '',
+                searchQuery: '',
 
                 async init() {
                     await this.fetchData();
                     supabaseClient.channel('realtime').on('postgres_changes', { event: '*', schema: 'public' }, () => this.fetchData()).subscribe();
+                },
+
+                // กรองข้อมูลทหารตามช่องค้นหา
+                get filteredSoldiers() {
+                    if (!this.searchQuery) return this.soldiers;
+                    const q = this.searchQuery.toLowerCase();
+                    return this.soldiers.filter(s => 
+                        (s.name && s.name.toLowerCase().includes(q)) || 
+                        (s.soldier_no && s.soldier_no.toString().includes(q))
+                    );
                 },
 
                 notify(msg, type = 'info') {
@@ -168,7 +176,8 @@
                 },
 
                 async fetchData() {
-                    const { data: s } = await supabaseClient.from('soldiers').select('*').order('name');
+                    // เรียงตามเลขประจำตัว (soldier_no) จากน้อยไปมาก
+                    const { data: s } = await supabaseClient.from('soldiers').select('*').order('soldier_no', { ascending: true });
                     const { data: f } = await supabaseClient.from('fees').select('*').order('created_at');
                     this.soldiers = s || [];
                     this.fees = f || [];
@@ -176,29 +185,36 @@
 
                 async addSoldier() {
                     if (!this.newSoldier) return;
-                    await supabaseClient.from('soldiers').insert([{ name: this.newSoldier, payments: {} }]);
-                    this.newSoldier = '';
-                    this.notify('เพิ่มชื่อทหารเรียบร้อย');
+                    await supabaseClient.from('soldiers').insert([{ 
+                        name: this.newSoldier, 
+                        soldier_no: parseInt(this.newId) || null,
+                        payments: {} 
+                    }]);
+                    this.newSoldier = ''; this.newId = '';
+                    this.notify('เพิ่มข้อมูลทหารแล้ว');
                 },
 
                 async addFee() {
                     if (!this.feeName || !this.feeAmount) return;
                     await supabaseClient.from('fees').insert([{ name: this.feeName, amount: parseFloat(this.feeAmount) }]);
                     this.feeName = ''; this.feeAmount = '';
-                    this.notify('เพิ่มรายการเรียกเก็บแล้ว');
+                    this.notify('เพิ่มรายการเงินแล้ว');
                 },
 
                 async togglePayment(soldier, feeId) {
                     const updatedPayments = { ...(soldier.payments || {}) };
                     updatedPayments[feeId] = !updatedPayments[feeId];
-                    // Optimistic update
                     soldier.payments = updatedPayments;
                     await supabaseClient.from('soldiers').update({ payments: updatedPayments }).eq('id', soldier.id);
                 },
 
                 async editSoldier(soldier) {
-                    const name = prompt('ชื่อใหม่:', soldier.name);
-                    if (name) await supabaseClient.from('soldiers').update({ name }).eq('id', soldier.id);
+                    const newNo = prompt('แก้ไขเลขประจำตัว:', soldier.soldier_no);
+                    const newName = prompt('แก้ไขชื่อ:', soldier.name);
+                    if (newName) await supabaseClient.from('soldiers').update({ 
+                        name: newName, 
+                        soldier_no: parseInt(newNo) || null 
+                    }).eq('id', soldier.id);
                 },
 
                 async removeSoldier(id) {
@@ -213,14 +229,6 @@
 
                 async removeFee(id) {
                     if (confirm('ลบรายการเงินนี้?')) await supabaseClient.from('fees').delete().eq('id', id);
-                },
-
-                async clearAllData() {
-                    if (confirm('⚠️ คำเตือน: คุณกำลังจะลบข้อมูลทหารและรายการเงินทั้งหมดออกจากระบบ! ยืนยันหรือไม่?')) {
-                        await supabaseClient.from('soldiers').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-                        await supabaseClient.from('fees').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-                        this.notify('ล้างข้อมูลสำเร็จ', 'error');
-                    }
                 },
 
                 countPaid(feeId) {
@@ -238,26 +246,16 @@
 
                 exportToExcel() {
                     const data = this.soldiers.map(s => {
-                        const row = { "รายชื่อทหาร": s.name };
+                        const row = { "เลขประจำตัว": s.soldier_no, "รายชื่อทหาร": s.name };
                         this.fees.forEach(f => {
-                            row[f.name + " (" + f.amount + ")"] = s.payments[f.id] ? "จ่ายแล้ว" : "-";
+                            row[f.name] = s.payments[f.id] ? f.amount : 0;
                         });
                         return row;
                     });
-
-                    // เพิ่มแถวสรุปยอดเงิน
-                    const summaryRow = { "รายชื่อทหาร": "สรุปยอดเงินรวม" };
-                    this.fees.forEach(f => {
-                        summaryRow[f.name + " (" + f.amount + ")"] = this.getSummary(f.id);
-                    });
-                    data.push({}); // แถวว่าง
-                    data.push(summaryRow);
-
                     const ws = XLSX.utils.json_to_sheet(data);
                     const wb = XLSX.utils.book_new();
-                    XLSX.utils.book_append_sheet(wb, ws, "รายงานบัญชีทหาร");
-                    XLSX.writeFile(wb, "Army_Report_" + new Date().toLocaleDateString() + ".xlsx");
-                    this.notify('ดาวน์โหลดไฟล์ Excel แล้ว');
+                    XLSX.utils.book_append_sheet(wb, ws, "Report");
+                    XLSX.writeFile(wb, "ArmyAccount_Report.xlsx");
                 }
             }
         }
